@@ -1,15 +1,28 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from datetime import datetime
+from flask_migrate import Migrate
+from datetime import datetime, timedelta
 import paho.mqtt.client as mqtt
 import json
+import threading
+import time
+import pytz
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pet_health.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
 
 # Models
 class Pet(db.Model):
@@ -24,7 +37,13 @@ class HealthReading(db.Model):
     heart_rate = db.Column(db.Float, nullable=False)
     temperature = db.Column(db.Float, nullable=False)
     activity_level = db.Column(db.Float, nullable=False)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     pet_id = db.Column(db.Integer, db.ForeignKey('pet.id'), nullable=False)
+
+# Data processing
+def smooth_data(data, window_size=3):
+    return [sum(data[i:i+window_size])/window_size for i in range(len(data)-window_size+1)]
 
 # MQTT setup
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -34,18 +53,23 @@ def on_connect(client, userdata, flags, rc, properties=None):
 def on_message(client, userdata, msg):
     print(f"Received message: {msg.payload}")
     data = json.loads(msg.payload)
+    dublin_tz = pytz.timezone('Europe/Dublin')
+    timestamp = datetime.fromisoformat(data['timestamp']).astimezone(pytz.UTC)
     new_reading = HealthReading(
         heart_rate=data['heart_rate'],
         temperature=data['temperature'],
         activity_level=data['activity_level'],
-        pet_id=data['pet_id']
+        latitude=data['latitude'],  # Make sure this line is present
+        longitude=data['longitude'],  # Make sure this line is present
+        pet_id=data['pet_id'],
+        timestamp=timestamp
     )
     with app.app_context():
         db.session.add(new_reading)
         db.session.commit()
     print(f"Saved new reading for pet {data['pet_id']}")
 
-mqtt_client = mqtt.Client(protocol=mqtt.MQTTv5)
+mqtt_client = mqtt.Client(protocol=mqtt.MQTTv5, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect("localhost", 1883, 60)
@@ -69,18 +93,45 @@ def get_pets():
 @app.route('/pet/<int:pet_id>/readings', methods=['GET'])
 def get_pet_readings(pet_id):
     pet = Pet.query.get_or_404(pet_id)
-    readings = HealthReading.query.filter_by(pet_id=pet_id).order_by(HealthReading.timestamp.desc()).limit(10).all()
+    readings = HealthReading.query.filter_by(pet_id=pet_id).order_by(HealthReading.timestamp.desc()).limit(100).all()
+    
+    heart_rates = [r.heart_rate for r in readings]
+    temperatures = [r.temperature for r in readings]
+    activity_levels = [r.activity_level for r in readings]
+    
+    smoothed_heart_rates = smooth_data(heart_rates)
+    smoothed_temperatures = smooth_data(temperatures)
+    smoothed_activity_levels = smooth_data(activity_levels)
+    
+    dublin_tz = pytz.timezone('Europe/Dublin')
+    
     return jsonify([
         {
             "id": reading.id,
-            "timestamp": reading.timestamp.isoformat(),
+            "timestamp": reading.timestamp.replace(tzinfo=pytz.UTC).astimezone(dublin_tz).isoformat(),
             "heart_rate": reading.heart_rate,
             "temperature": reading.temperature,
-            "activity_level": reading.activity_level
-        } for reading in readings
+            "activity_level": reading.activity_level,
+            "latitude": reading.latitude,
+            "longitude": reading.longitude,
+            "smoothed_heart_rate": smoothed_heart_rates[i] if i < len(smoothed_heart_rates) else None,
+            "smoothed_temperature": smoothed_temperatures[i] if i < len(smoothed_temperatures) else None,
+            "smoothed_activity_level": smoothed_activity_levels[i] if i < len(smoothed_activity_levels) else None
+        } for i, reading in enumerate(readings)
     ])
 
+def cleanup_old_data():
+    while True:
+        with app.app_context():
+            one_month_ago = datetime.now(pytz.UTC) - timedelta(days=30)
+            old_readings = HealthReading.query.filter(HealthReading.timestamp < one_month_ago).all()
+            for reading in old_readings:
+                db.session.delete(reading)
+            db.session.commit()
+        time.sleep(86400)  # Run once a day
+
+cleanup_thread = threading.Thread(target=cleanup_old_data)
+cleanup_thread.start()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)

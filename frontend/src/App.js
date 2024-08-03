@@ -5,7 +5,7 @@ import PetList from './components/PetList';
 import AddPetForm from './components/AddPetForm';
 import PetDetails from './components/PetDetails';
 
-function App() {
+const App = () => {
   const [pets, setPets] = useState([]);
   const [selectedPetId, setSelectedPetId] = useState(null);
   const [error, setError] = useState(null);
@@ -47,10 +47,9 @@ function App() {
             )}
           </div>
         </div>
-        {error && <p className="text-red-500 mt-4">{error}</p>}
       </main>
     </div>
   );
-}
+};
 
 export default App;

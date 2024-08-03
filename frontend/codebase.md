@@ -177,6 +177,107 @@ yarn-error.log*
 
 ```
 
+# public\robots.txt
+
+```txt
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+
+```
+
+# public\manifest.json
+
+```json
+{
+  "short_name": "React App",
+  "name": "Create React App Sample",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
+
+```
+
+# public\logo512.png
+
+This is a binary file of the type: Image
+
+# public\logo192.png
+
+This is a binary file of the type: Image
+
+# public\index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
+
+```
+
+# public\favicon.ico
+
+This is a binary file of the type: Binary
+
 # src\setupTests.js
 
 ```js
@@ -368,155 +469,6 @@ export default App;
 
 ```
 
-# public\robots.txt
-
-```txt
-# https://www.robotstxt.org/robotstxt.html
-User-agent: *
-Disallow:
-
-```
-
-# public\manifest.json
-
-```json
-{
-  "short_name": "React App",
-  "name": "Create React App Sample",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
-}
-
-```
-
-# public\logo512.png
-
-This is a binary file of the type: Image
-
-# public\logo192.png
-
-This is a binary file of the type: Image
-
-# public\index.html
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
-</html>
-
-```
-
-# public\favicon.ico
-
-This is a binary file of the type: Binary
-
-# src\services\api.js
-
-```js
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5000';
-
-export const addPet = (petData) => {
-  console.log('Sending request to add pet:', petData);
-  return axios.post(`${API_URL}/pet`, petData)
-    .then(response => {
-      console.log('Add pet response:', response.data);
-      return response;
-    })
-    .catch(error => {
-      console.error('Error adding pet:', error);
-      throw error;
-    });
-};
-
-export const getPets = () => {
-  console.log('Fetching all pets');
-  return axios.get(`${API_URL}/pets`)
-    .then(response => {
-      console.log('Get pets response:', response.data);
-      return response;
-    })
-    .catch(error => {
-      console.error('Error fetching pets:', error);
-      throw error;
-    });
-};
-
-export const getPetReadings = (petId) => {
-  console.log('Fetching readings for pet:', petId);
-  return axios.get(`${API_URL}/pet/${petId}/readings`)
-    .then(response => {
-      console.log('Pet readings response:', response.data);
-      return response;
-    })
-    .catch(error => {
-      console.error('Error fetching pet readings:', error);
-      throw error;
-    });
-};
-
-```
-
 # src\components\PetList.js
 
 ```js
@@ -698,6 +650,54 @@ function AddPetForm({ onPetAdded }) {
 }
 
 export default AddPetForm;
+
+```
+
+# src\services\api.js
+
+```js
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000';
+
+export const addPet = (petData) => {
+  console.log('Sending request to add pet:', petData);
+  return axios.post(`${API_URL}/pet`, petData)
+    .then(response => {
+      console.log('Add pet response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error adding pet:', error);
+      throw error;
+    });
+};
+
+export const getPets = () => {
+  console.log('Fetching all pets');
+  return axios.get(`${API_URL}/pets`)
+    .then(response => {
+      console.log('Get pets response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching pets:', error);
+      throw error;
+    });
+};
+
+export const getPetReadings = (petId) => {
+  console.log('Fetching readings for pet:', petId);
+  return axios.get(`${API_URL}/pet/${petId}/readings`)
+    .then(response => {
+      console.log('Pet readings response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching pet readings:', error);
+      throw error;
+    });
+};
 
 ```
 

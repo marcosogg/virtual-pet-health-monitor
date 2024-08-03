@@ -8,6 +8,7 @@ function AddPetForm({ onPetAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     try {
       await addPet({ name, species });
       setName('');
@@ -15,9 +16,10 @@ function AddPetForm({ onPetAdded }) {
       onPetAdded();
     } catch (error) {
       console.error('Error adding pet:', error);
-      setError('Failed to add pet. Please try again.');
+      setError(error.response?.data?.message || 'Failed to add pet. Please try again.');
     }
   };
+  
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
