@@ -1,3 +1,18 @@
+# tailwind.config.js
+
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+
+```
+
 # README.md
 
 ```md
@@ -71,6 +86,18 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+```
+
+# postcss.config.js
+
+```js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
 
 ```
 
@@ -216,20 +243,9 @@ reportWebVitals();
 # src\index.css
 
 ```css
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 ```
 
 # src\App.test.js
@@ -250,65 +266,56 @@ test('renders learn react link', () => {
 
 ```js
 import React, { useState, useEffect } from 'react';
-import { addPet, addReading, getPetReadings } from './services/api';
-import './App.css';
+import { getPets } from './services/api';
+import Header from './components/Header';
+import PetList from './components/PetList';
+import AddPetForm from './components/AddPetForm';
+import PetDetails from './components/PetDetails';
 
 function App() {
   const [pets, setPets] = useState([]);
-  const [readings, setReadings] = useState([]);
-
-  const handleAddPet = async () => {
-    try {
-      const response = await addPet({ name: 'Fluffy', species: 'Cat' });
-      console.log('Pet added:', response.data);
-      // Update pets state or fetch pets again
-    } catch (error) {
-      console.error('Error adding pet:', error);
-    }
-  };
-
-  const handleAddReading = async () => {
-    try {
-      const response = await addReading({
-        heart_rate: 80,
-        temperature: 38.5,
-        activity_level: 0.7,
-        pet_id: 1 // Assume we have a pet with ID 1
-      });
-      console.log('Reading added:', response.data);
-    } catch (error) {
-      console.error('Error adding reading:', error);
-    }
-  };
+  const [selectedPetId, setSelectedPetId] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchReadings = async () => {
-      try {
-        const response = await getPetReadings(1); // Fetch readings for pet with ID 1
-        setReadings(response.data);
-      } catch (error) {
-        console.error('Error fetching readings:', error);
-      }
-    };
-
-    fetchReadings();
+    fetchPets();
   }, []);
 
+  const fetchPets = async () => {
+    try {
+      const response = await getPets();
+      setPets(response.data);
+    } catch (error) {
+      console.error('Error fetching pets:', error);
+      setError('Failed to fetch pets. Please try again.');
+    }
+  };
+
   return (
-    <div className="App">
-      <h1>Virtual Pet Health Monitor</h1>
-      <button onClick={handleAddPet}>Add Pet</button>
-      <button onClick={handleAddReading}>Add Reading</button>
-      <div>
-        <h2>Latest Readings</h2>
-        {readings.map(reading => (
-          <div key={reading.id}>
-            <p>Heart Rate: {reading.heart_rate}</p>
-            <p>Temperature: {reading.temperature}</p>
-            <p>Activity Level: {reading.activity_level}</p>
+    <div className="min-h-screen bg-gray-100">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-1">
+            <AddPetForm onPetAdded={fetchPets} />
+            <PetList 
+              pets={pets} 
+              selectedPetId={selectedPetId} 
+              onSelectPet={setSelectedPetId} 
+            />
           </div>
-        ))}
-      </div>
+          <div className="md:col-span-2">
+            {selectedPetId ? (
+              <PetDetails petId={selectedPetId} />
+            ) : (
+              <div className="bg-white shadow rounded-lg p-6">
+                <p className="text-gray-500">Select a pet to view details</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+      </main>
     </div>
   );
 }
@@ -465,14 +472,232 @@ This is a binary file of the type: Binary
 # src\services\api.js
 
 ```js
-// src/services/api.js
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000';
 
-export const addPet = (petData) => axios.post(`${API_URL}/pet`, petData);
-export const addReading = (readingData) => axios.post(`${API_URL}/reading`, readingData);
-export const getPetReadings = (petId) => axios.get(`${API_URL}/pet/${petId}/readings`);
+export const addPet = (petData) => {
+  console.log('Sending request to add pet:', petData);
+  return axios.post(`${API_URL}/pet`, petData)
+    .then(response => {
+      console.log('Add pet response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error adding pet:', error);
+      throw error;
+    });
+};
+
+export const getPets = () => {
+  console.log('Fetching all pets');
+  return axios.get(`${API_URL}/pets`)
+    .then(response => {
+      console.log('Get pets response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching pets:', error);
+      throw error;
+    });
+};
+
+export const getPetReadings = (petId) => {
+  console.log('Fetching readings for pet:', petId);
+  return axios.get(`${API_URL}/pet/${petId}/readings`)
+    .then(response => {
+      console.log('Pet readings response:', response.data);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching pet readings:', error);
+      throw error;
+    });
+};
+
+```
+
+# src\components\PetList.js
+
+```js
+import React from 'react';
+
+function PetList({ pets, selectedPetId, onSelectPet }) {
+  return (
+    <div className="bg-white shadow rounded-lg p-6 mt-6">
+      <h2 className="text-xl font-semibold mb-4">Your Pets</h2>
+      <ul className="space-y-2">
+        {pets.map(pet => (
+          <li key={pet.id}>
+            <button
+              className={`w-full text-left px-4 py-2 rounded ${
+                pet.id === selectedPetId ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+              }`}
+              onClick={() => onSelectPet(pet.id)}
+            >
+              {pet.name} ({pet.species})
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default PetList;
+
+```
+
+# src\components\PetDetails.js
+
+```js
+import React, { useState, useEffect } from 'react';
+import { getPetReadings } from '../services/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+function PetDetails({ petId }) {
+  const [readings, setReadings] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchReadings = async () => {
+      try {
+        const response = await getPetReadings(petId);
+        setReadings(response.data);
+      } catch (error) {
+        console.error('Error fetching readings:', error);
+        setError('Failed to fetch readings. Please try again.');
+      }
+    };
+
+    fetchReadings();
+    const interval = setInterval(fetchReadings, 60000); // Fetch every minute
+
+    return () => clearInterval(interval);
+  }, [petId]);
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-2xl font-semibold mb-4">Pet Health Readings</h2>
+      {readings.length > 0 ? (
+        <>
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-2">Latest Reading</h3>
+            <p>Timestamp: {new Date(readings[0].timestamp).toLocaleString()}</p>
+            <p>Heart Rate: {readings[0].heart_rate} bpm</p>
+            <p>Temperature: {readings[0].temperature}°C</p>
+            <p>Activity Level: {readings[0].activity_level}</p>
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={readings.reverse()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" tickFormatter={(timestamp) => new Date(timestamp).toLocaleTimeString()} />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip labelFormatter={(timestamp) => new Date(timestamp).toLocaleString()} />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="heart_rate" stroke="#8884d8" name="Heart Rate (bpm)" />
+                <Line yAxisId="left" type="monotone" dataKey="temperature" stroke="#82ca9d" name="Temperature (°C)" />
+                <Line yAxisId="right" type="monotone" dataKey="activity_level" stroke="#ffc658" name="Activity Level" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      ) : (
+        <p>No readings available</p>
+      )}
+    </div>
+  );
+}
+
+export default PetDetails;
+
+```
+
+# src\components\Header.js
+
+```js
+import React from 'react';
+
+function Header() {
+  return (
+    <header className="bg-blue-600 text-white shadow">
+      <div className="container mx-auto px-4 py-6">
+        <h1 className="text-3xl font-bold">Virtual Pet Health Monitor</h1>
+      </div>
+    </header>
+  );
+}
+
+export default Header;
+
+```
+
+# src\components\AddPetForm.js
+
+```js
+import React, { useState } from 'react';
+import { addPet } from '../services/api';
+
+function AddPetForm({ onPetAdded }) {
+  const [name, setName] = useState('');
+  const [species, setSpecies] = useState('');
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await addPet({ name, species });
+      setName('');
+      setSpecies('');
+      onPetAdded();
+    } catch (error) {
+      console.error('Error adding pet:', error);
+      setError('Failed to add pet. Please try again.');
+    }
+  };
+
+  return (
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-xl font-semibold mb-4">Add New Pet</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Pet Name</label>
+          <input
+            type="text"
+            id="name"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="species" className="block text-sm font-medium text-gray-700">Pet Species</label>
+          <input
+            type="text"
+            id="species"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            value={species}
+            onChange={(e) => setSpecies(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+          Add Pet
+        </button>
+      </form>
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+    </div>
+  );
+}
+
+export default AddPetForm;
 
 ```
 

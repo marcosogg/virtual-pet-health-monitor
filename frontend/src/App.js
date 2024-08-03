@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { addPet, getPets, getPetReadings } from './services/api';
-import './App.css';
+import { getPets } from './services/api';
+import Header from './components/Header';
+import PetList from './components/PetList';
+import AddPetForm from './components/AddPetForm';
+import PetDetails from './components/PetDetails';
 
 function App() {
   const [pets, setPets] = useState([]);
-  const [readings, setReadings] = useState([]);
   const [selectedPetId, setSelectedPetId] = useState(null);
   const [error, setError] = useState(null);
-  const [newPetName, setNewPetName] = useState('');
-  const [newPetSpecies, setNewPetSpecies] = useState('');
 
   useEffect(() => {
     fetchPets();
@@ -24,82 +24,31 @@ function App() {
     }
   };
 
-  const handleAddPet = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await addPet({ name: newPetName, species: newPetSpecies });
-      console.log('Pet added:', response.data);
-      setNewPetName('');
-      setNewPetSpecies('');
-      fetchPets();
-    } catch (error) {
-      console.error('Error adding pet:', error);
-      setError('Failed to add pet. Please try again.');
-    }
-  };
-
-  useEffect(() => {
-    const fetchReadings = async () => {
-      if (selectedPetId) {
-        try {
-          const response = await getPetReadings(selectedPetId);
-          setReadings(response.data);
-        } catch (error) {
-          console.error('Error fetching readings:', error);
-          setError('Failed to fetch readings. Please try again.');
-        }
-      }
-    };
-
-    fetchReadings();
-    const interval = setInterval(fetchReadings, 60000); // Fetch every minute
-
-    return () => clearInterval(interval);
-  }, [selectedPetId]);
-
   return (
-    <div className="App">
-      <h1>Virtual Pet Health Monitor</h1>
-      <form onSubmit={handleAddPet}>
-        <input
-          type="text"
-          value={newPetName}
-          onChange={(e) => setNewPetName(e.target.value)}
-          placeholder="Pet Name"
-          required
-        />
-        <input
-          type="text"
-          value={newPetSpecies}
-          onChange={(e) => setNewPetSpecies(e.target.value)}
-          placeholder="Pet Species"
-          required
-        />
-        <button type="submit">Add Pet</button>
-      </form>
-      <select onChange={(e) => setSelectedPetId(e.target.value)}>
-        <option value="">Select a pet</option>
-        {pets.map(pet => (
-          <option key={pet.id} value={pet.id}>{pet.name} ({pet.species})</option>
-        ))}
-      </select>
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      <div>
-        <h2>Latest Readings</h2>
-        {readings.length > 0 ? (
-          readings.map(reading => (
-            <div key={reading.id}>
-              <p>Timestamp: {new Date(reading.timestamp).toLocaleString()}</p>
-              <p>Heart Rate: {reading.heart_rate} bpm</p>
-              <p>Temperature: {reading.temperature}°C</p>
-              <p>Activity Level: {reading.activity_level}</p>
-              <hr />
-            </div>
-          ))
-        ) : (
-          <p>No readings available</p>
-        )}
-      </div>
+    <div className="min-h-screen bg-gray-100">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-1">
+            <AddPetForm onPetAdded={fetchPets} />
+            <PetList 
+              pets={pets} 
+              selectedPetId={selectedPetId} 
+              onSelectPet={setSelectedPetId} 
+            />
+          </div>
+          <div className="md:col-span-2">
+            {selectedPetId ? (
+              <PetDetails petId={selectedPetId} />
+            ) : (
+              <div className="bg-white shadow rounded-lg p-6">
+                <p className="text-gray-500">Select a pet to view details</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+      </main>
     </div>
   );
 }
