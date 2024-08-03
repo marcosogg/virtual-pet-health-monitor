@@ -16,7 +16,7 @@ function AddPetForm({ onPetAdded }) {
       onPetAdded();
     } catch (error) {
       console.error('Error adding pet:', error);
-      setError(error.response?.data?.message || 'Failed to add pet. Please try again.');
+      setError(error.response?.data?.error || 'Failed to add pet. Please try again.');
     }
   };
   

@@ -16,15 +16,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({"error": "Not found"}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({"error": "Internal server error"}), 500
-
-# Models
 class Pet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -37,15 +28,14 @@ class HealthReading(db.Model):
     heart_rate = db.Column(db.Float, nullable=False)
     temperature = db.Column(db.Float, nullable=False)
     activity_level = db.Column(db.Float, nullable=False)
+    respiratory_rate = db.Column(db.Float, nullable=False)
+    hydration_level = db.Column(db.Float, nullable=False)
+    sleep_duration = db.Column(db.Float, nullable=False)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
+    hours_since_feeding = db.Column(db.Float, nullable=False)
     pet_id = db.Column(db.Integer, db.ForeignKey('pet.id'), nullable=False)
 
-# Data processing
-def smooth_data(data, window_size=3):
-    return [sum(data[i:i+window_size])/window_size for i in range(len(data)-window_size+1)]
-
-# MQTT setup
 def on_connect(client, userdata, flags, rc, properties=None):
     print(f"Connected with result code {rc}")
     client.subscribe("pet/health")
@@ -59,8 +49,12 @@ def on_message(client, userdata, msg):
         heart_rate=data['heart_rate'],
         temperature=data['temperature'],
         activity_level=data['activity_level'],
-        latitude=data['latitude'],  # Make sure this line is present
-        longitude=data['longitude'],  # Make sure this line is present
+        respiratory_rate=data['respiratory_rate'],
+        hydration_level=data['hydration_level'],
+        sleep_duration=data['sleep_duration'],
+        latitude=data['latitude'],
+        longitude=data['longitude'],
+        hours_since_feeding=data['hours_since_feeding'],
         pet_id=data['pet_id'],
         timestamp=timestamp
     )
@@ -75,33 +69,10 @@ mqtt_client.on_message = on_message
 mqtt_client.connect("localhost", 1883, 60)
 mqtt_client.loop_start()
 
-# Routes
-@app.route('/pet', methods=['POST'])
-def add_pet():
-    data = request.json
-    new_pet = Pet(name=data['name'], species=data['species'])
-    db.session.add(new_pet)
-    db.session.commit()
-    print(f"Added new pet: {new_pet.name} (ID: {new_pet.id})")
-    return jsonify({"message": "Pet added successfully", "pet_id": new_pet.id, "name": new_pet.name}), 201
-
-@app.route('/pets', methods=['GET'])
-def get_pets():
-    pets = Pet.query.all()
-    return jsonify([{"id": pet.id, "name": pet.name, "species": pet.species} for pet in pets])
-
 @app.route('/pet/<int:pet_id>/readings', methods=['GET'])
 def get_pet_readings(pet_id):
     pet = Pet.query.get_or_404(pet_id)
     readings = HealthReading.query.filter_by(pet_id=pet_id).order_by(HealthReading.timestamp.desc()).limit(100).all()
-    
-    heart_rates = [r.heart_rate for r in readings]
-    temperatures = [r.temperature for r in readings]
-    activity_levels = [r.activity_level for r in readings]
-    
-    smoothed_heart_rates = smooth_data(heart_rates)
-    smoothed_temperatures = smooth_data(temperatures)
-    smoothed_activity_levels = smooth_data(activity_levels)
     
     dublin_tz = pytz.timezone('Europe/Dublin')
     
@@ -112,26 +83,46 @@ def get_pet_readings(pet_id):
             "heart_rate": reading.heart_rate,
             "temperature": reading.temperature,
             "activity_level": reading.activity_level,
+            "respiratory_rate": reading.respiratory_rate,
+            "hydration_level": reading.hydration_level,
+            "sleep_duration": reading.sleep_duration,
             "latitude": reading.latitude,
             "longitude": reading.longitude,
-            "smoothed_heart_rate": smoothed_heart_rates[i] if i < len(smoothed_heart_rates) else None,
-            "smoothed_temperature": smoothed_temperatures[i] if i < len(smoothed_temperatures) else None,
-            "smoothed_activity_level": smoothed_activity_levels[i] if i < len(smoothed_activity_levels) else None
-        } for i, reading in enumerate(readings)
+            "hours_since_feeding": reading.hours_since_feeding
+        } for reading in readings
     ])
 
-def cleanup_old_data():
-    while True:
-        with app.app_context():
-            one_month_ago = datetime.now(pytz.UTC) - timedelta(days=30)
-            old_readings = HealthReading.query.filter(HealthReading.timestamp < one_month_ago).all()
-            for reading in old_readings:
-                db.session.delete(reading)
-            db.session.commit()
-        time.sleep(86400)  # Run once a day
+@app.route('/pets', methods=['GET'])
+def get_pets():
+    pets = Pet.query.all()
+    return jsonify([{"id": pet.id, "name": pet.name, "species": pet.species} for pet in pets])
 
-cleanup_thread = threading.Thread(target=cleanup_old_data)
-cleanup_thread.start()
+@app.route('/pet', methods=['POST'])
+def add_pet():
+    data = request.json
+    if not data or 'name' not in data or 'species' not in data:
+        return jsonify({"error": "Invalid input. Name and species are required."}), 400
+    try:
+        new_pet = Pet(name=data['name'], species=data['species'])
+        db.session.add(new_pet)
+        db.session.commit()
+        return jsonify({"message": "Pet added successfully", "pet_id": new_pet.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# def cleanup_old_data():
+#     while True:
+#         with app.app_context():
+#             one_month_ago = datetime.now(pytz.UTC) - timedelta(days=30)
+#             old_readings = HealthReading.query.filter(HealthReading.timestamp < one_month_ago).all()
+#             for reading in old_readings:
+#                 db.session.delete(reading)
+#             db.session.commit()
+#         time.sleep(86400)  # Run once a day
+
+# cleanup_thread = threading.Thread(target=cleanup_old_data)
+# cleanup_thread.start()
 
 if __name__ == '__main__':
     app.run(debug=True)

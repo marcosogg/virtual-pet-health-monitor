@@ -14,6 +14,7 @@ class PetWearableDevice:
         self.client.on_publish = self.on_publish
         self.broker_address = broker_address
         self.broker_port = broker_port
+        self.last_feeding_time = datetime.now(pytz.timezone('Europe/Dublin'))
 
     def on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
@@ -27,16 +28,28 @@ class PetWearableDevice:
     def generate_reading(self):
         dublin_tz = pytz.timezone('Europe/Dublin')
         current_time = datetime.now(dublin_tz)
+        
+        # Calculate time since last feeding
+        time_since_feeding = current_time - self.last_feeding_time
+        hours_since_feeding = time_since_feeding.total_seconds() / 3600
+
+        # Simulate feeding every 8-12 hours
+        if hours_since_feeding > random.uniform(8, 12):
+            self.last_feeding_time = current_time
+
         return {
             "pet_id": self.pet_id,
             "heart_rate": round(random.uniform(60, 120), 2),
             "temperature": round(random.uniform(37.5, 39.5), 2),
             "activity_level": round(random.uniform(0, 10), 2),
+            "respiratory_rate": round(random.uniform(15, 30), 2),  # New: breaths per minute
+            "hydration_level": round(random.uniform(0, 100), 2),  # New: percentage
+            "sleep_duration": round(random.uniform(0, 12), 2),  # New: hours of sleep in last 24h
             "latitude": round(random.uniform(53.3, 53.4), 6),  # Dublin latitude range
             "longitude": round(random.uniform(-6.3, -6.2), 6),  # Dublin longitude range
+            "hours_since_feeding": round(hours_since_feeding, 2),  # New: hours since last feeding
             "timestamp": current_time.isoformat()
         }
-
 
     def send_reading(self):
         reading = self.generate_reading()
