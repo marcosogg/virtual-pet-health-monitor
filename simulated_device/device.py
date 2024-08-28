@@ -5,6 +5,7 @@ import paho.mqtt.client as mqtt
 from datetime import datetime
 import pytz
 import sys
+import threading
 
 class PetWearableDevice:
     def __init__(self, pet_id, broker_address="localhost", broker_port=1883):
@@ -42,12 +43,12 @@ class PetWearableDevice:
             "heart_rate": round(random.uniform(60, 120), 2),
             "temperature": round(random.uniform(37.5, 39.5), 2),
             "activity_level": round(random.uniform(0, 10), 2),
-            "respiratory_rate": round(random.uniform(15, 30), 2),  # New: breaths per minute
-            "hydration_level": round(random.uniform(0, 100), 2),  # New: percentage
-            "sleep_duration": round(random.uniform(0, 12), 2),  # New: hours of sleep in last 24h
-            "latitude": round(random.uniform(53.3, 53.4), 6),  # Dublin latitude range
-            "longitude": round(random.uniform(-6.3, -6.2), 6),  # Dublin longitude range
-            "hours_since_feeding": round(hours_since_feeding, 2),  # New: hours since last feeding
+            "respiratory_rate": round(random.uniform(15, 30), 2),
+            "hydration_level": round(random.uniform(0, 100), 2),
+            "sleep_duration": round(random.uniform(0, 12), 2),
+            "latitude": round(random.uniform(53.3, 53.4), 6),
+            "longitude": round(random.uniform(-6.3, -6.2), 6),
+            "hours_since_feeding": round(hours_since_feeding, 2),
             "timestamp": current_time.isoformat()
         }
 
@@ -75,11 +76,25 @@ class PetWearableDevice:
             self.client.loop_stop()
             self.client.disconnect()
 
+def run_device(pet_id, interval):
+    device = PetWearableDevice(pet_id)
+    device.run(interval)
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python device.py <pet_id>")
+        print("Usage: python device.py <number_of_pets>")
         sys.exit(1)
     
-    pet_id = int(sys.argv[1])
-    device = PetWearableDevice(pet_id)
-    device.run(interval=10)  # Sending readings every 10 seconds for testing
+    num_pets = int(sys.argv[1])
+    threads = []
+    
+    for i in range(num_pets):
+        thread = threading.Thread(target=run_device, args=(i+1, 10))
+        threads.append(thread)
+        thread.start()
+    
+    try:
+        for thread in threads:
+            thread.join()
+    except KeyboardInterrupt:
+        print("Stopping all devices...")

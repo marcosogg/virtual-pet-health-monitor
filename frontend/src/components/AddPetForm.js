@@ -4,71 +4,55 @@ import { addPet } from '../services/api';
 function AddPetForm({ onPetAdded }) {
   const [name, setName] = useState('');
   const [species, setSpecies] = useState('');
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
-    setIsSubmitting(true);
     try {
       await addPet({ name, species });
       setName('');
       setSpecies('');
-      setSuccess(true);
       onPetAdded();
     } catch (error) {
       console.error('Error adding pet:', error);
-      setError(error.response?.data?.error || 'Failed to add pet. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-serif font-semibold mb-4 text-primary-dark">Add New Pet</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      <h2 className="text-2xl font-bold text-white py-4 px-6 bg-blue-500">Add New Pet</h2>
+      <form onSubmit={handleSubmit} className="p-6">
         <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Pet Name</label>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Pet Name</label>
           <input
             type="text"
             id="name"
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50 ${
-              name ? 'border-green-300 focus:border-green-300 focus:ring-green-200' : 'border-gray-300 focus:border-primary focus:ring-primary-light'
-            }`}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="species" className="block text-sm font-medium text-gray-700">Pet Species</label>
-          <input
-            type="text"
+          <label htmlFor="species" className="block text-sm font-medium text-gray-700 mb-1">Pet Species</label>
+          <select
             id="species"
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50 ${
-              species ? 'border-green-300 focus:border-green-300 focus:ring-green-200' : 'border-gray-300 focus:border-primary focus:ring-primary-light'
-            }`}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             value={species}
             onChange={(e) => setSpecies(e.target.value)}
             required
-          />
+          >
+            <option value="">Select a species</option>
+            <option value="Cat">Cat</option>
+            <option value="Dog">Dog</option>
+          </select>
         </div>
         <button 
           type="submit" 
-          className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-            isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'
-          }`}
-          disabled={isSubmitting}
+          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          {isSubmitting ? 'Adding Pet...' : 'Add Pet'}
+          Add Pet
         </button>
       </form>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      {success && <p className="mt-2 text-sm text-green-600">Pet added successfully!</p>}
     </div>
   );
 }
