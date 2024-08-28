@@ -3,7 +3,7 @@ import dogCatLogo from '../dogcat.png';
 
 function Header() {
   return (
-    <header className="bg-primary-700 text-white shadow-lg">
+    <header className="bg-primary-700 text-white shadow-lg fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4 py-4 flex justify-between items-end">
         <div className="text-center md:text-left mb-4 md:mb-0">
           <h1 className="text-3xl md:text-4xl font-bold font-serif">Virtual Pet Health Monitor</h1>

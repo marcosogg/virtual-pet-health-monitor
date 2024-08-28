@@ -13,7 +13,7 @@ const App = () => {
     <Router>
       <div className="flex flex-col min-h-screen bg-gray-100">
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="flex-grow container mx-auto px-4 py-8 mt-32"> {/* Added mt-32 for top margin */}
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Dashboard />} />
