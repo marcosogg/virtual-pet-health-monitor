@@ -9,20 +9,29 @@ import threading
 import time
 import pytz
 from flask_socketio import SocketIO, emit
+import logging
+import os
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pet_health.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'pet_health.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mode='threading', logger=True, engineio_logger=True)
 
 class Pet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     species = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    breed = db.Column(db.String(50))
+    age = db.Column(db.Float)
+    weight = db.Column(db.Float)
     last_activity = db.Column(db.DateTime, default=datetime.utcnow)
     readings = db.relationship('HealthReading', backref='pet', lazy=True, cascade="all, delete-orphan")
 
@@ -41,11 +50,11 @@ class HealthReading(db.Model):
     pet_id = db.Column(db.Integer, db.ForeignKey('pet.id'), nullable=False)
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    print(f"Connected with result code {rc}")
+    logger.info(f"MQTT client connected with result code {rc}")
     client.subscribe("pet/health")
 
 def on_message(client, userdata, msg):
-    print(f"Received message: {msg.payload}")
+    logger.info(f"Received MQTT message: {msg.payload}")
     data = json.loads(msg.payload)
     dublin_tz = pytz.timezone('Europe/Dublin')
     timestamp = datetime.fromisoformat(data['timestamp']).astimezone(pytz.UTC)
@@ -67,9 +76,8 @@ def on_message(client, userdata, msg):
         pet = Pet.query.get(data['pet_id'])
         if pet:
             pet.last_activity = timestamp
-            pet.is_active = True
         db.session.commit()
-    print(f"Saved new reading for pet {data['pet_id']}")
+    logger.info(f"Saved new reading for pet {data['pet_id']}")
     socketio.emit('new_reading', data)
 
 mqtt_client = mqtt.Client(protocol=mqtt.MQTTv5, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
@@ -82,9 +90,9 @@ mqtt_client.loop_start()
 def get_pet_readings(pet_id):
     pet = Pet.query.get_or_404(pet_id)
     readings = HealthReading.query.filter_by(pet_id=pet_id).order_by(HealthReading.timestamp.desc()).limit(100).all()
-    
+
     dublin_tz = pytz.timezone('Europe/Dublin')
-    
+
     return jsonify([
         {
             "id": reading.id,
@@ -103,8 +111,16 @@ def get_pet_readings(pet_id):
 
 @app.route('/pets', methods=['GET'])
 def get_pets():
-    pets = Pet.query.filter_by(is_active=True).all()
-    return jsonify([{"id": pet.id, "name": pet.name, "species": pet.species} for pet in pets])
+    pets = Pet.query.all()
+    return jsonify([{
+        "id": pet.id,
+        "name": pet.name,
+        "species": pet.species,
+        "breed": pet.breed,
+        "age": pet.age,
+        "weight": pet.weight
+    } for pet in pets])
+
 
 @app.route('/pet', methods=['POST'])
 def add_pet():
@@ -112,7 +128,7 @@ def add_pet():
     if not data or 'name' not in data or 'species' not in data:
         return jsonify({"error": "Invalid input. Name and species are required."}), 400
     try:
-        new_pet = Pet(name=data['name'], species=data['species'], is_active=True)
+        new_pet = Pet(name=data['name'], species=data['species'])
         db.session.add(new_pet)
         db.session.commit()
         return jsonify({"message": "Pet added successfully", "pet_id": new_pet.id}), 201
@@ -120,29 +136,39 @@ def add_pet():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/pet/<int:pet_id>', methods=['DELETE'])
 def delete_pet(pet_id):
     pet = Pet.query.get_or_404(pet_id)
     try:
-        pet.is_active = False
+        db.session.delete(pet)
         db.session.commit()
-        return jsonify({"message": "Pet marked as inactive successfully"}), 200
+        return jsonify({"message": "Pet deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-def clean_inactive_pets():
-    while True:
-        with app.app_context():
-            inactive_threshold = datetime.utcnow() - timedelta(hours=24)
-            inactive_pets = Pet.query.filter(Pet.last_activity < inactive_threshold).all()
-            for pet in inactive_pets:
-                pet.is_active = False
-            db.session.commit()
-        time.sleep(3600)  # Run every hour
+@socketio.on('connect')
+def handle_connect():
+    logger.info(f'Client connected: {request.sid}')
 
-cleaning_thread = threading.Thread(target=clean_inactive_pets)
-cleaning_thread.start()
+@socketio.on('disconnect')
+def handle_disconnect():
+    logger.info(f'Client disconnected: {request.sid}')
+
+@socketio.on('error')
+def handle_error(error):
+    logger.error(f'SocketIO error: {error}')
+
+@socketio.on('ping')
+def handle_ping():
+    logger.debug(f'Received ping from client: {request.sid}')
+    emit('pong')
+
+# Create database tables
+with app.app_context():
+    db.create_all()
+    logger.info("Database tables created.")
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

@@ -8,6 +8,7 @@ The Virtual Pet Health Monitor is a web application that allows pet owners to mo
 - Dashboard displaying key health indicators
 - Historical data visualization using charts
 - Support for multiple pets
+- Custom icon gallery (available in development environment)
 
 ## Health Metrics
 
@@ -35,6 +36,10 @@ The application tracks and displays the following health metrics for each pet:
    npm start
    ```
 5. Open your browser and visit `http://localhost:3000`
+
+## Custom Icon Gallery
+
+In the development environment, you can access the custom icon gallery by visiting `http://localhost:3000/icon-gallery`. This gallery displays all available custom icons used in the application, making it easier for developers to reference and use these icons in their components.
 
 ## Running Tests
 

@@ -99,41 +99,71 @@ export const Alert = ({ children, type = 'info' }) => {
   );
 };
 
-export const Icon = ({ name, className = '' }) => {
+export const Icon = ({ name, className = '', text = '' }) => {
   const icons = {
-    heart: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-      </svg>
-    ),
-    thermometer: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v11.5a.5.5 0 01-.5.5H3a1 1 0 100 2h14a1 1 0 100-2h-.5a.5.5 0 01-.5-.5V4a2 2 0 00-2-2H6zm7 9a1 1 0 10-2 0v3a1 1 0 102 0v-3z" clipRule="evenodd" />
-      </svg>
-    ),
-    lung: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 110-2h4a1 1 0 011 1v4a1 1 0 11-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 112 0v1.586l2.293-2.293a1 1 0 011.414 1.414L6.414 15H8a1 1 0 110 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 110-2h1.586l-2.293-2.293a1 1 0 011.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
-      </svg>
-    ),
-    running: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" clipRule="evenodd" />
-      </svg>
-    ),
-    moon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-      </svg>
-    ),
-    droplet: (
-      <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-      </svg>
-    ),
+    heart: '❤️',
+    thermometer: '🌡️',
+    lung: '🫁',
+    running: '🏃',
+    moon: '🌙',
+    droplet: '💧',
+    dog: '🐕',
+    cat: '🐈',
+    food: '🍖',
+    water: '💧',
+    paw: '🐾',
+    bell: '🔔',
+    chart: '📊',
+    calendar: '📅',
+    pill: '💊',
+    vaccine: '💉',
+    stethoscope: '🩺',
+    bone: '🦴',
+    fish: '🐠',
+    bird: '🐦',
+    rabbit: '🐰',
+    hamster: '🐹',
+    turtle: '🐢',
+    poop: '💩',
+    leash: '🐕‍🦺',
+    brush: '🧹',
+    scissors: '✂️',
+    bath: '🛁',
+    toy: '🧸',
+    bed: '🛏️',
+    house: '🏠',
+    park: '🏞️',
+    vet: '👨‍⚕️',
+    microscope: '🔬',
+    'x-ray': '🦴',
+    bandage: '🩹',
+    weight: '⚖️',
+    collar: '🔗',
+    clock: '⏰',
+    sun: '☀️',
+    rain: '🌧️',
+    snow: '❄️',
+    hot: '🥵',
+    cold: '🥶',
+    flea: '🐜',
+    tick: '🕷️',
+    grooming: '💇',
+    tooth: '🦷',
+    ear: '👂',
+    eye: '👁️',
+    nose: '👃',
+    'paw-print': '🐾',
+    'first-aid-kit': '🧳',
+    'pet-carrier': '🧳',
+    'pet-food-bowl': '🥣',
   };
 
-  return icons[name] || null;
+  return (
+    <div className={`flex items-center ${className}`}>
+      <span className="mr-2">{icons[name] || name}</span>
+      {text && <span>{text}</span>}
+    </div>
+  );
 };
 
 export const Tooltip = ({ children, text }) => {
@@ -174,5 +204,60 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const MetricCard = ({ icon, label, value, unit, normalRange, timestamp, onViewDetails }) => {
+  const getStatusColor = (value, normalRange) => {
+    if (value === 'N/A') return 'text-gray-500';
+    if (value < normalRange[0]) return 'text-red-500';
+    if (value > normalRange[1]) return 'text-red-500';
+    if (value === normalRange[0] || value === normalRange[1]) return 'text-yellow-500';
+    return 'text-green-500';
+  };
+
+  const isAbnormal = (value, normalRange) => {
+    return value < normalRange[0] || value > normalRange[1];
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          <Icon name={icon} className="w-8 h-8 mr-4" />
+          <div>
+            <p className="text-sm font-medium text-gray-500 capitalize">{label}</p>
+            <p className={`text-2xl font-bold ${getStatusColor(value, normalRange)}`}>
+              {value === 'N/A' ? 'N/A' : `${value} ${unit}`}
+            </p>
+          </div>
+        </div>
+        {isAbnormal(value, normalRange) && (
+          <Tooltip text="This value is outside the normal range">
+            <Icon name="bell" className="w-6 h-6 text-red-500" />
+          </Tooltip>
+        )}
+      </div>
+      <div className="flex items-center justify-between text-sm text-gray-500">
+        <p>Last updated: {new Date(timestamp).toLocaleString()}</p>
+        <Button size="sm" onClick={onViewDetails}>View Details</Button>
+      </div>
+    </div>
+  );
+};
+
+export const Dropdown = ({ options, value, onChange, className = '' }) => {
+  return (
+    <select
+      className={`shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-500 ${className}`}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 };

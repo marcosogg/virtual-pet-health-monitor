@@ -2,7 +2,11 @@ import axios from 'axios';
 import io from 'socket.io-client';
 
 const API_URL = 'http://localhost:5000';
-const socket = io(API_URL);
+const socket = io(API_URL, {
+  transports: ['polling'],
+  forceNew: true,
+  timeout: 10000,
+});
 
 export const addPet = (petData) => {
   console.log('Sending request to add pet:', petData);
@@ -111,3 +115,48 @@ export const subscribeToNewReadings = (callback) => {
 export const unsubscribeFromNewReadings = () => {
   socket.off('new_reading');
 };
+
+// Add error and connection listeners for debugging
+socket.on('connect_error', (error) => {
+  console.error('Socket.IO connection error:', error);
+});
+
+socket.on('connect', () => {
+  console.log('Socket.IO connected successfully');
+  // Start sending ping messages
+  setInterval(() => {
+    console.log('Sending ping to server');
+    socket.emit('ping');
+  }, 25000); // Send a ping every 25 seconds
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('Socket.IO disconnected:', reason);
+});
+
+socket.on('pong', () => {
+  console.log('Received pong from server');
+});
+
+socket.on('error', (error) => {
+  console.error('Socket.IO error:', error);
+});
+
+// Reconnection logic
+socket.io.on('reconnect_attempt', (attempt) => {
+  console.log('Attempting to reconnect:', attempt);
+});
+
+socket.io.on('reconnect', (attempt) => {
+  console.log('Reconnected after', attempt, 'attempts');
+});
+
+socket.io.on('reconnect_error', (error) => {
+  console.error('Reconnection error:', error);
+});
+
+socket.io.on('reconnect_failed', () => {
+  console.error('Failed to reconnect');
+});
+
+export const socketInstance = socket;
