@@ -14,7 +14,7 @@ def main():
     time.sleep(5)
 
     # Start multiple simulated devices
-    num_pets = 3  # Change this to the number of pets you want to simulate
+    num_pets = 10  # Change this to the number of pets you want to simulate
     device_processes = []
     for pet_id in range(1, num_pets + 1):
         device_process = start_process(f"python simulated_device/device.py {pet_id}")

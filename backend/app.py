@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import paho.mqtt.client as mqtt
 import json
 import threading
@@ -37,7 +37,7 @@ class Pet(db.Model):
 
 class HealthReading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.UTC))
     heart_rate = db.Column(db.Float, nullable=False)
     temperature = db.Column(db.Float, nullable=False)
     activity_level = db.Column(db.Float, nullable=False)
